@@ -1,7 +1,7 @@
 package api
 
 import (
-	"crawlerctl/config"
+	"github.com/Ntrashh/crawlerctl/config"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"

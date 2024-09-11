@@ -1,8 +1,8 @@
 package main
 
 import (
-	"crawlerctl/config"
-	routes "crawlerctl/routers"
+	"github.com/Ntrashh/crawlerctl/config"
+	routes "github.com/Ntrashh/crawlerctl/routers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"log"

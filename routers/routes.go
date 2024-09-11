@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"crawlerctl/api"
-	"crawlerctl/middleware"
+	"github.com/Ntrashh/crawlerctl/api"
+	"github.com/Ntrashh/crawlerctl/middleware"
 	"github.com/gin-gonic/gin"
 )
 

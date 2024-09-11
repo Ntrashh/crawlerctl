@@ -1,7 +1,7 @@
 package api
 
 import (
-	"crawlerctl/services"
+	"github.com/Ntrashh/crawlerctl/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

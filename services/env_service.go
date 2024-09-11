@@ -2,9 +2,9 @@ package services
 
 import (
 	"bytes"
-	"crawlerctl/util"
 	"errors"
 	"fmt"
+	"github.com/Ntrashh/crawlerctl/util"
 	"os/exec"
 	"strings"
 )
