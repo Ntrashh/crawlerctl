@@ -1,2 +1,10 @@
 server:
   port: "8080"
+
+auth:
+  username: "admin"
+  password: "1234"
+
+jwt:
+  secret: "WmgLFDbqup8iBz3ftRjDtG"
+  expire_hours: 72
