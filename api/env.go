@@ -14,7 +14,6 @@ func CheckPyenvInstalledHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	pyenvVirtualenvInstalled, err := services.CheckPyenvVirtualenvInstalled()
 	if err != nil || !pyenvVirtualenvInstalled {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -24,26 +23,24 @@ func CheckPyenvInstalledHandler(c *gin.Context) {
 }
 
 func GetPyenvPythonVersionHandler(c *gin.Context) {
-	versions, err := services.GetPyenvPythonVersions()
+	queryType := c.Query("type")
+	var pythonVersions []map[string]interface{}
+	versions, err := services.GetPythonVersions()
+	if queryType == "pyenv" {
+		pythonVersions, err = services.GetPyenvPythonVersions(versions)
+
+	} else if queryType == "virtual" {
+		pythonVersions, err = services.GetVirtualPythonVersions(versions)
+	} else {
+		ErrorResponse(c, http.StatusBadRequest, "Invalid query type")
+		return
+	}
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	var items []map[string]interface{}
-	for version := range versions {
-		path, err := services.GetPyenvVersionPath(versions[version])
-		if err != nil {
-			ErrorResponse(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		item := map[string]interface{}{
-			"version":  versions[version],
-			"path":     path,
-			"isGlobal": services.IsGlobalVersion(versions[version]),
-		}
-		items = append(items, item)
-	}
-	SuccessResponse(c, items)
+
+	SuccessResponse(c, pythonVersions)
 }
 
 func InstallPythonHandler(c *gin.Context) {
@@ -61,4 +58,13 @@ func InstallPythonHandler(c *gin.Context) {
 		return
 	}
 	SuccessResponse(c, result)
+}
+
+func GetRemotePythonVersionHandler(c *gin.Context) {
+	versions, err := services.GetRemotePythonVersion()
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, versions)
 }

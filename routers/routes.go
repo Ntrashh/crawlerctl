@@ -17,6 +17,7 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.GET("/check_install", api.CheckPyenvInstalledHandler)
 		envRoutes.GET("/get_versions", api.GetPyenvPythonVersionHandler)
 		envRoutes.POST("/install", api.InstallPythonHandler)
+		envRoutes.GET("/remote_versions", api.GetRemotePythonVersionHandler)
 	}
 
 }

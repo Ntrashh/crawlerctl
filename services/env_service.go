@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Ntrashh/crawlerctl/util"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -46,6 +47,13 @@ func PyenvRootPath() (string, error) {
 	return outStr, nil
 }
 
+func IsOfficialVersion(version string) bool {
+	// 正式版本的正则表达式：匹配类似于 "3.8.10" 或 "3.9.5" 这样的版本号
+	officialVersionPattern := `^\d+\.\d+\.\d+$`
+	re := regexp.MustCompile(officialVersionPattern)
+	return re.MatchString(version)
+}
+
 // GetPyenvVersionPath 获取当前版本的路径
 func GetPyenvVersionPath(version string) (string, error) {
 	pyenvRootPath, err := PyenvRootPath()
@@ -56,8 +64,8 @@ func GetPyenvVersionPath(version string) (string, error) {
 	return path, nil
 }
 
-// GetPyenvPythonVersions 查询 pyenv 已安装的 Python 版本
-func GetPyenvPythonVersions() ([]string, error) {
+// GetPythonVersions 获取当前所有 python 版本
+func GetPythonVersions() ([]string, error) {
 	// 执行 `pyenv versions --bare` 命令来获取精简的 Python 版本列表
 	cmd := exec.Command("pyenv", "versions", "--bare")
 	// 捕获命令输出
@@ -77,6 +85,81 @@ func GetPyenvPythonVersions() ([]string, error) {
 		}
 	}
 	return cleanedVersions, nil
+}
+
+// GetPyenvPythonVersions 查询 pyenv 已安装的 Python 版本
+func GetPyenvPythonVersions(versions []string) ([]map[string]interface{}, error) {
+	var items []map[string]interface{}
+	for version := range versions {
+		path, err := GetPyenvVersionPath(versions[version])
+		if err != nil {
+			return nil, err
+		}
+
+		if !IsOfficialVersion(versions[version]) {
+			continue
+		}
+		item := map[string]interface{}{
+			"version":  versions[version],
+			"path":     path,
+			"isGlobal": IsGlobalVersion(versions[version]),
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+func ExtractEnvName(path string) (string, bool) {
+	// 定义正则表达式，匹配 "/envs/" 后面的部分
+	re := regexp.MustCompile(`/envs/([^/]+)`)
+	match := re.FindStringSubmatch(path)
+
+	// 如果匹配成功，返回虚拟环境的名字
+	if len(match) > 1 {
+		return match[1], true
+	}
+	return "", false
+}
+
+func extractVersion(path string) (string, bool) {
+	// 定义正则表达式，匹配 `envs` 前面的部分，形如 `3.10.10`
+	re := regexp.MustCompile(`^(\d+\.\d+\.\d+)/envs/`)
+	match := re.FindStringSubmatch(path)
+
+	// 如果匹配成功，返回版本号
+	if len(match) > 1 {
+		return match[1], true
+	}
+	return "", false
+}
+
+func GetVirtualPythonVersions(versions []string) ([]map[string]interface{}, error) {
+	var items []map[string]interface{}
+	for version := range versions {
+		path, err := GetPyenvVersionPath(versions[version])
+		if err != nil {
+			return nil, err
+		}
+
+		if IsOfficialVersion(versions[version]) {
+			continue
+		}
+		name, result := ExtractEnvName(versions[version])
+		if !result {
+			continue
+		}
+		envVersion, result := extractVersion(versions[version])
+		if !result {
+			continue
+		}
+		item := map[string]interface{}{
+			"envName": name,
+			"version": envVersion,
+			"path":    path,
+		}
+		items = append(items, item)
+	}
+	return items, nil
+
 }
 
 func IsGlobalVersion(version string) bool {
@@ -105,4 +188,22 @@ func InstallPyenvPython(version string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func GetRemotePythonVersion() ([]string, error) {
+	var officialVersions []string
+	out, err := util.ExecCmd("pyenv", "install", "-list")
+	if err != nil {
+		return nil, err
+	}
+	remoteVersions := strings.Split(out, "\n")
+	for _, remoteVersion := range remoteVersions {
+		fmt.Printf("remoteVersion,%s \n", remoteVersion)
+		remoteVersion = strings.TrimSpace(remoteVersion)
+		if IsOfficialVersion(remoteVersion) {
+			officialVersions = append(officialVersions, remoteVersion)
+		}
+	}
+	officialVersions = util.ReverseSlice(officialVersions)
+	return officialVersions, nil
 }
