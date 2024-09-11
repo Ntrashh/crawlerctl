@@ -29,5 +29,36 @@ func GetPyenvPythonVersionHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	SuccessResponse(c, versions)
+	var items []map[string]interface{}
+	for version := range versions {
+		path, err := services.GetPyenvVersionPath(versions[version])
+		if err != nil {
+			ErrorResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		item := map[string]interface{}{
+			"version":  versions[version],
+			"path":     path,
+			"isGlobal": services.IsGlobalVersion(versions[version]),
+		}
+		items = append(items, item)
+	}
+	SuccessResponse(c, items)
+}
+
+func InstallPythonHandler(c *gin.Context) {
+	var versionData struct {
+		Version string `json:"version"`
+	}
+	err := c.ShouldBindJSON(&versionData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := services.InstallPyenvPython(versionData.Version)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, result)
 }

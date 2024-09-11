@@ -2,7 +2,9 @@ package services
 
 import (
 	"bytes"
+	"crawlerctl/util"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -35,6 +37,25 @@ func CheckPyenvVirtualenvInstalled() (bool, error) {
 	return true, nil
 }
 
+func PyenvRootPath() (string, error) {
+	out, err := util.ExecCmd("pyenv", "root")
+	if err != nil {
+		return "", err
+	}
+	outStr := strings.Replace(out, "\n", "", -1)
+	return outStr, nil
+}
+
+// GetPyenvVersionPath 获取当前版本的路径
+func GetPyenvVersionPath(version string) (string, error) {
+	pyenvRootPath, err := PyenvRootPath()
+	if err != nil {
+		return "", err
+	}
+	path := fmt.Sprintf("%s/versions/%s", pyenvRootPath, version)
+	return path, nil
+}
+
 // GetPyenvPythonVersions 查询 pyenv 已安装的 Python 版本
 func GetPyenvPythonVersions() ([]string, error) {
 	// 执行 `pyenv versions --bare` 命令来获取精简的 Python 版本列表
@@ -56,4 +77,32 @@ func GetPyenvPythonVersions() ([]string, error) {
 		}
 	}
 	return cleanedVersions, nil
+}
+
+func IsGlobalVersion(version string) bool {
+	cmd := exec.Command("pyenv", "global")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	outStr := strings.Replace(string(out), "\n", "", -1)
+	if version == outStr {
+		return true
+	}
+	return false
+}
+
+func InstallPyenvPython(version string) (bool, error) {
+	pyenvRootPath, err := PyenvRootPath()
+	downloadUrl := fmt.Sprintf("https://mirrors.huaweicloud.com/python/%s/Python-%s.tar.xz", version, version)
+	outputPath := fmt.Sprintf("%s/cache/Python-%s.tar.xz", pyenvRootPath, version)
+	err = util.DownloadFile(downloadUrl, outputPath)
+	if err != nil {
+		return false, err
+	}
+	_, err = util.ExecCmd("pyenv", "install", version)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
