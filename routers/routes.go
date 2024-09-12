@@ -20,4 +20,9 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.GET("/remote_versions", api.GetRemotePythonVersionHandler)
 	}
 
+	taskRoutes := router.Group("/tasks")
+	{
+		taskRoutes.GET("/task_status", api.GetTaskStatus)
+	}
+
 }

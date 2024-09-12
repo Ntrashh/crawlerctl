@@ -88,8 +88,12 @@ func GetPythonVersions() ([]string, error) {
 }
 
 // GetPyenvPythonVersions 查询 pyenv 已安装的 Python 版本
-func GetPyenvPythonVersions(versions []string) ([]map[string]interface{}, error) {
+func GetPyenvPythonVersions() ([]map[string]interface{}, error) {
 	var items []map[string]interface{}
+	versions, err := GetPythonVersions()
+	if err != nil {
+		return nil, err
+	}
 	for version := range versions {
 		path, err := GetPyenvVersionPath(versions[version])
 		if err != nil {
@@ -132,7 +136,11 @@ func extractVersion(path string) (string, bool) {
 	return "", false
 }
 
-func GetVirtualPythonVersions(versions []string) ([]map[string]interface{}, error) {
+func GetVirtualPythonVersions() ([]map[string]interface{}, error) {
+	versions, err := GetPythonVersions()
+	if err != nil {
+		return nil, err
+	}
 	var items []map[string]interface{}
 	for version := range versions {
 		path, err := GetPyenvVersionPath(versions[version])
@@ -175,19 +183,19 @@ func IsGlobalVersion(version string) bool {
 	return false
 }
 
-func InstallPyenvPython(version string) (bool, error) {
+func InstallPyenvPython(version string) (string, error) {
 	pyenvRootPath, err := PyenvRootPath()
 	downloadUrl := fmt.Sprintf("https://mirrors.huaweicloud.com/python/%s/Python-%s.tar.xz", version, version)
 	outputPath := fmt.Sprintf("%s/cache/Python-%s.tar.xz", pyenvRootPath, version)
 	err = util.DownloadFile(downloadUrl, outputPath)
 	if err != nil {
-		return false, err
+		return "", err
 	}
-	_, err = util.ExecCmd("pyenv", "install", version)
+	out, err := util.ExecCmd("pyenv", "install", version)
 	if err != nil {
-		return false, err
+		return out, err
 	}
-	return true, nil
+	return out, nil
 }
 
 func GetRemotePythonVersion() ([]string, error) {
@@ -198,7 +206,6 @@ func GetRemotePythonVersion() ([]string, error) {
 	}
 	remoteVersions := strings.Split(out, "\n")
 	for _, remoteVersion := range remoteVersions {
-		fmt.Printf("remoteVersion,%s \n", remoteVersion)
 		remoteVersion = strings.TrimSpace(remoteVersion)
 		if IsOfficialVersion(remoteVersion) {
 			officialVersions = append(officialVersions, remoteVersion)
