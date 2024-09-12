@@ -214,3 +214,41 @@ func GetRemotePythonVersion() ([]string, error) {
 	officialVersions = util.ReverseSlice(officialVersions)
 	return officialVersions, nil
 }
+
+func SetVersionGlobal(version string) (string, error) {
+	out, err := util.ExecCmd("pyenv", "global", version)
+	if err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
+func DeletePythonVersion(version string) (string, error) {
+
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("yes | pyenv uninstall %s", version))
+	output, err := cmd.CombinedOutput() // 获取 stdout 和 stderr
+	outStr := strings.TrimSpace(string(output))
+	if err != nil {
+		return outStr, err
+	}
+	return outStr, nil
+}
+
+func DeleteVirtualenv(envName string) (bool, error) {
+
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("yes | pyenv virtualenv-delete %s", envName))
+	_, err := cmd.CombinedOutput() // 获取 stdout 和 stderr
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return false, err
+	}
+	return true, nil
+}
+
+func CreateVirtualenv(envName, version string) (string, error) {
+	out, err := util.ExecCmd("pyenv", "virtualenv", version, envName)
+	if err != nil {
+		return out, err
+	}
+	return out, nil
+}

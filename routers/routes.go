@@ -18,6 +18,10 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.GET("/get_versions", api.GetPyenvPythonVersionHandler)
 		envRoutes.POST("/install", api.InstallPythonHandler)
 		envRoutes.GET("/remote_versions", api.GetRemotePythonVersionHandler)
+		envRoutes.POST("/set_global", api.SetVersionGlobalHandler)
+		envRoutes.POST("/delete_python", api.DeletePythonVersionHandler)
+		envRoutes.POST("/create_virtualenv", api.CreateVirtualenvHandler)
+		envRoutes.POST("/delete_virtualenv", api.DeleteVirtualenvHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")

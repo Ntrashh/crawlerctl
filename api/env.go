@@ -5,6 +5,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/models"
 	"github.com/Ntrashh/crawlerctl/services"
 	"github.com/Ntrashh/crawlerctl/task"
+	"github.com/Ntrashh/crawlerctl/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -42,7 +43,7 @@ func GetPyenvPythonVersionHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-
+	pythonVersions = util.ReverseSlice(pythonVersions)
 	SuccessResponse(c, pythonVersions)
 }
 
@@ -67,7 +68,7 @@ func InstallPythonHandler(c *gin.Context) {
 		}
 	}
 	flag := false
-	//TODO 检测正在安装的任务中是否存在
+	//检测正在安装的任务中是否存在
 	task.TaskStore.Range(func(key, value interface{}) bool {
 		taskStore, ok := value.(*models.Task)
 		if !ok {
@@ -116,4 +117,75 @@ func GetRemotePythonVersionHandler(c *gin.Context) {
 		return
 	}
 	SuccessResponse(c, versions)
+}
+
+func SetVersionGlobalHandler(c *gin.Context) {
+	var versionData struct {
+		Version string `json:"version"`
+	}
+	err := c.ShouldBindJSON(&versionData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	out, err := services.SetVersionGlobal(versionData.Version)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, out)
+		return
+	}
+	SuccessResponse(c, true)
+}
+
+func DeletePythonVersionHandler(c *gin.Context) {
+	var versionData struct {
+		Version string `json:"version"`
+	}
+	err := c.ShouldBindJSON(&versionData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	out, err := services.DeletePythonVersion(versionData.Version)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, out)
+		return
+	}
+	SuccessResponse(c, true)
+}
+
+func CreateVirtualenvHandler(c *gin.Context) {
+	var versionData struct {
+		EnvName string `json:"env_name"`
+		Version string `json:"version"`
+	}
+	err := c.ShouldBindJSON(&versionData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	out, err := services.CreateVirtualenv(versionData.EnvName, versionData.Version)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, out)
+		return
+	}
+	SuccessResponse(c, true)
+
+}
+
+func DeleteVirtualenvHandler(c *gin.Context) {
+	var versionData struct {
+		EnvName string `json:"env_name"`
+	}
+	err := c.ShouldBindJSON(&versionData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	_, err = services.DeleteVirtualenv(versionData.EnvName)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, true)
+
 }
