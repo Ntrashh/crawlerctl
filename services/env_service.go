@@ -280,8 +280,8 @@ func (s *EnvService) CreateVirtualenv(envName, version string) (string, error) {
 	return out, nil
 }
 
-// GetVirtualenv 获取指定名称的虚拟环境
-func (s *EnvService) GetVirtualenv(envName string) (map[string]interface{}, error) {
+// GetVirtualenvByName 获取指定名称的虚拟环境
+func (s *EnvService) GetVirtualenvByName(envName string) (map[string]interface{}, error) {
 	versions, err := s.GetVirtualPythonVersions()
 	if err != nil {
 		return nil, err
@@ -328,6 +328,7 @@ func (s *EnvService) GetVirtualenvPipPackage(path string) ([]map[string]string, 
 	return packages, nil
 }
 
+// GetPackageVersions 获取指定包的所有版本
 func (s *EnvService) GetPackageVersions(packageName string) ([]string, error) {
 	url := fmt.Sprintf("https://pypi.org/pypi/%s/json", packageName)
 

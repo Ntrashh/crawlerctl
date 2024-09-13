@@ -200,3 +200,53 @@ func (h *EnvHandler) DeleteVirtualenvHandler(c *gin.Context) {
 	SuccessResponse(c, true)
 
 }
+
+func (h *EnvHandler) GetVirtualenvByNameHandler(c *gin.Context) {
+	envName := c.Query("env_name")
+	env, err := h.EnvService.GetVirtualenvByName(envName)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if env == nil {
+		ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("未查询到虚拟环境:%s", envName))
+	}
+	SuccessResponse(c, env)
+}
+
+func (h *EnvHandler) VirtualenvPipInstallPackagesHandler(c *gin.Context) {
+	var envData struct {
+		EnvPath string `json:"env_path"`
+	}
+	err := c.ShouldBindJSON(&envData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	packages, err := h.EnvService.GetVirtualenvPipPackage(envData.EnvPath)
+
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, packages)
+}
+
+func (h *EnvHandler) GetPackageVersionsHandler(c *gin.Context) {
+	var envData struct {
+		PackageName string `json:"package_name"`
+	}
+	err := c.ShouldBindJSON(&envData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	packages, err := h.EnvService.GetPackageVersions(envData.PackageName)
+
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, packages)
+
+}
