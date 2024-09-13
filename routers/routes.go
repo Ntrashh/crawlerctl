@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/Ntrashh/crawlerctl/api"
 	"github.com/Ntrashh/crawlerctl/middleware"
+	"github.com/Ntrashh/crawlerctl/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,17 +12,19 @@ func RegisterRoutes(router *gin.Engine) {
 
 	router.POST("/login", api.LoginHandler)
 	// 环境管理相关的路由
+	envService := services.NewEnvService()
+	envHandler := api.NewEnvHandler(envService)
 	envRoutes := router.Group("/envs")
 	envRoutes.Use(middleware.AuthMiddleware())
 	{
-		envRoutes.GET("/check_install", api.CheckPyenvInstalledHandler)
-		envRoutes.GET("/get_versions", api.GetPyenvPythonVersionHandler)
-		envRoutes.POST("/install", api.InstallPythonHandler)
-		envRoutes.GET("/remote_versions", api.GetRemotePythonVersionHandler)
-		envRoutes.POST("/set_global", api.SetVersionGlobalHandler)
-		envRoutes.POST("/delete_python", api.DeletePythonVersionHandler)
-		envRoutes.POST("/create_virtualenv", api.CreateVirtualenvHandler)
-		envRoutes.POST("/delete_virtualenv", api.DeleteVirtualenvHandler)
+		envRoutes.GET("/check_install", envHandler.CheckPyenvInstalledHandler)
+		envRoutes.GET("/get_versions", envHandler.GetPyenvPythonVersionHandler)
+		envRoutes.POST("/install", envHandler.InstallPythonHandler)
+		envRoutes.GET("/remote_versions", envHandler.GetRemotePythonVersionHandler)
+		envRoutes.POST("/set_global", envHandler.SetVersionGlobalHandler)
+		envRoutes.POST("/delete_python", envHandler.DeletePythonVersionHandler)
+		envRoutes.POST("/create_virtualenv", envHandler.CreateVirtualenvHandler)
+		envRoutes.POST("/delete_virtualenv", envHandler.DeleteVirtualenvHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")

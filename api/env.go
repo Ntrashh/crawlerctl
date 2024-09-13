@@ -10,15 +10,26 @@ import (
 	"net/http"
 )
 
+type EnvHandler struct {
+	EnvService *services.EnvService
+}
+
+// 在初始化时创建 Handler 实例
+func NewEnvHandler(envService *services.EnvService) *EnvHandler {
+	return &EnvHandler{
+		EnvService: envService,
+	}
+}
+
 // CheckPyenvInstalledHandler 检查 pyenv 是否安装
-func CheckPyenvInstalledHandler(c *gin.Context) {
-	pyenvInstalled, err := services.CheckPyenvInstalled()
+func (h *EnvHandler) CheckPyenvInstalledHandler(c *gin.Context) {
+	pyenvInstalled, err := h.EnvService.CheckPyenvInstalled()
 
 	if err != nil || !pyenvInstalled {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	pyenvVirtualenvInstalled, err := services.CheckPyenvVirtualenvInstalled()
+	pyenvVirtualenvInstalled, err := h.EnvService.CheckPyenvVirtualenvInstalled()
 	if err != nil || !pyenvVirtualenvInstalled {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -26,15 +37,15 @@ func CheckPyenvInstalledHandler(c *gin.Context) {
 	SuccessResponse(c, "Environment created successfully")
 }
 
-func GetPyenvPythonVersionHandler(c *gin.Context) {
+func (h *EnvHandler) GetPyenvPythonVersionHandler(c *gin.Context) {
 	queryType := c.Query("type")
 	var pythonVersions []map[string]interface{}
 	var err error
 	if queryType == "pyenv" {
-		pythonVersions, err = services.GetPyenvPythonVersions()
+		pythonVersions, err = h.EnvService.GetPyenvPythonVersions()
 
 	} else if queryType == "virtual" {
-		pythonVersions, err = services.GetVirtualPythonVersions()
+		pythonVersions, err = h.EnvService.GetVirtualPythonVersions()
 	} else {
 		ErrorResponse(c, http.StatusBadRequest, "Invalid query type")
 		return
@@ -47,7 +58,7 @@ func GetPyenvPythonVersionHandler(c *gin.Context) {
 	SuccessResponse(c, pythonVersions)
 }
 
-func InstallPythonHandler(c *gin.Context) {
+func (h *EnvHandler) InstallPythonHandler(c *gin.Context) {
 	var versionData struct {
 		Version string `json:"version"`
 	}
@@ -56,7 +67,7 @@ func InstallPythonHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	versions, err := services.GetPyenvPythonVersions()
+	versions, err := h.EnvService.GetPyenvPythonVersions()
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -69,7 +80,7 @@ func InstallPythonHandler(c *gin.Context) {
 	}
 	flag := false
 	//检测正在安装的任务中是否存在
-	task.TaskStore.Range(func(key, value interface{}) bool {
+	task.AsyncTaskStore.Range(func(key, value interface{}) bool {
 		taskStore, ok := value.(*models.Task)
 		if !ok {
 			return true // 继续遍历
@@ -95,7 +106,7 @@ func InstallPythonHandler(c *gin.Context) {
 		version := p["version"].(string)
 
 		// 调用服务层的 InstallPyenvPython 方法
-		out, installErr := services.InstallPyenvPython(version)
+		out, installErr := h.EnvService.InstallPyenvPython(version)
 		return map[string]string{
 			"message": out,
 			"version": version,
@@ -110,8 +121,8 @@ func InstallPythonHandler(c *gin.Context) {
 	SuccessResponse(c, taskID)
 }
 
-func GetRemotePythonVersionHandler(c *gin.Context) {
-	versions, err := services.GetRemotePythonVersion()
+func (h *EnvHandler) GetRemotePythonVersionHandler(c *gin.Context) {
+	versions, err := h.EnvService.GetRemotePythonVersion()
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -119,7 +130,7 @@ func GetRemotePythonVersionHandler(c *gin.Context) {
 	SuccessResponse(c, versions)
 }
 
-func SetVersionGlobalHandler(c *gin.Context) {
+func (h *EnvHandler) SetVersionGlobalHandler(c *gin.Context) {
 	var versionData struct {
 		Version string `json:"version"`
 	}
@@ -128,7 +139,7 @@ func SetVersionGlobalHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	out, err := services.SetVersionGlobal(versionData.Version)
+	out, err := h.EnvService.SetVersionGlobal(versionData.Version)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, out)
 		return
@@ -136,7 +147,7 @@ func SetVersionGlobalHandler(c *gin.Context) {
 	SuccessResponse(c, true)
 }
 
-func DeletePythonVersionHandler(c *gin.Context) {
+func (h *EnvHandler) DeletePythonVersionHandler(c *gin.Context) {
 	var versionData struct {
 		Version string `json:"version"`
 	}
@@ -145,7 +156,7 @@ func DeletePythonVersionHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	out, err := services.DeletePythonVersion(versionData.Version)
+	out, err := h.EnvService.DeletePythonVersion(versionData.Version)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, out)
 		return
@@ -153,7 +164,7 @@ func DeletePythonVersionHandler(c *gin.Context) {
 	SuccessResponse(c, true)
 }
 
-func CreateVirtualenvHandler(c *gin.Context) {
+func (h *EnvHandler) CreateVirtualenvHandler(c *gin.Context) {
 	var versionData struct {
 		EnvName string `json:"env_name"`
 		Version string `json:"version"`
@@ -163,7 +174,7 @@ func CreateVirtualenvHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	out, err := services.CreateVirtualenv(versionData.EnvName, versionData.Version)
+	out, err := h.EnvService.CreateVirtualenv(versionData.EnvName, versionData.Version)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, out)
 		return
@@ -172,7 +183,7 @@ func CreateVirtualenvHandler(c *gin.Context) {
 
 }
 
-func DeleteVirtualenvHandler(c *gin.Context) {
+func (h *EnvHandler) DeleteVirtualenvHandler(c *gin.Context) {
 	var versionData struct {
 		EnvName string `json:"env_name"`
 	}
@@ -181,7 +192,7 @@ func DeleteVirtualenvHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	_, err = services.DeleteVirtualenv(versionData.EnvName)
+	_, err = h.EnvService.DeleteVirtualenv(versionData.EnvName)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
