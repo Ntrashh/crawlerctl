@@ -330,9 +330,19 @@ func (s *EnvService) GetVirtualenvPipPackage(path string) ([]map[string]interfac
 
 // GetPackageVersions 获取指定包的所有版本
 func (s *EnvService) GetPackageVersions(packageName string) ([]string, error) {
-	url := fmt.Sprintf("https://pypi.org/pypi/%s/json", packageName)
+	//url := fmt.Sprintf("https://pypi.org/pypi/%s/json", packageName)
+	url := fmt.Sprintf("https://mirrors.ustc.edu.cn/pypi/%s/json", packageName)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("无法创建请求：%v", err)
+	}
 
-	resp, err := http.Get(url)
+	// 添加请求头
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("无法发送请求：%v", err)
 	}
@@ -348,9 +358,8 @@ func (s *EnvService) GetPackageVersions(packageName string) ([]string, error) {
 
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		return nil, fmt.Errorf("解析 JSON 失败：%v", err)
+		return nil, fmt.Errorf("无法解析响应：%v", err)
 	}
-
 	var versions []string
 	for version := range result.Releases {
 		versions = append(versions, version)
