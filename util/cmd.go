@@ -1,25 +1,34 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
-// ExecCmd 用于执行外部命令，并返回标准输出和错误
-func ExecCmd(name string, args ...string) (string, error) {
-	// 创建一个命令实例
-	cmd := exec.Command(name, args...)
+func ExecCmd(command string, args ...string) (string, error) {
+	// 创建命令
+	cmd := exec.Command(command, args...)
 
-	// 执行命令并捕获输出
-	output, err := cmd.CombinedOutput() // CombinedOutput 捕获标准输出和标准错误
+	// 捕获标准输出和错误输出
+	var outBuffer bytes.Buffer
+	var errBuffer bytes.Buffer
+	cmd.Stdout = &outBuffer
+	cmd.Stderr = &errBuffer
 
-	// 返回输出和错误
-	return strings.TrimSpace(string(output)), err
+	// 运行命令
+	err := cmd.Run()
+	// 合并输出
+	output := outBuffer.String() + errBuffer.String()
+
+	if err != nil {
+		return output, err
+	}
+	return output, nil
 }
 
 func EnsureDir(fileName string) error {

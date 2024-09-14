@@ -27,7 +27,9 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.POST("/delete_virtualenv", envHandler.DeleteVirtualenvHandler)
 		envRoutes.GET("/get_virtualenv", envHandler.GetVirtualenvByNameHandler)
 		envRoutes.POST("/installed_packages", envHandler.VirtualenvPipInstallPackagesHandler)
-		envRoutes.POST("/package_versions", envHandler.GetPackageVersionsHandler)
+		envRoutes.GET("/package_versions", envHandler.GetPackageVersionsHandler)
+		envRoutes.POST("/uninstall_packages", envHandler.UninstallPackageHandler)
+		envRoutes.POST("/install_packages", envHandler.InstallPackageHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")

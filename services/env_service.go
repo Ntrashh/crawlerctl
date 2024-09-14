@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os/exec"
 	"regexp"
-	"sort"
 	"strings"
 )
 
@@ -282,6 +281,7 @@ func (s *EnvService) CreateVirtualenv(envName, version string) (string, error) {
 
 // GetVirtualenvByName 获取指定名称的虚拟环境
 func (s *EnvService) GetVirtualenvByName(envName string) (map[string]interface{}, error) {
+	//var versions map[string]interface{}
 	versions, err := s.GetVirtualPythonVersions()
 	if err != nil {
 		return nil, err
@@ -296,12 +296,12 @@ func (s *EnvService) GetVirtualenvByName(envName string) (map[string]interface{}
 }
 
 // GetVirtualenvPipPackage 获取虚拟环境已经安装的包
-func (s *EnvService) GetVirtualenvPipPackage(path string) ([]map[string]string, error) {
+func (s *EnvService) GetVirtualenvPipPackage(path string) ([]map[string]interface{}, error) {
 	out, err := util.ExecCmd(fmt.Sprintf("%s/bin/pip", path), "freeze")
 	if err != nil {
 		return nil, err
 	}
-	var packages []map[string]string
+	var packages = make([]map[string]interface{}, 0)
 
 	// 分割输入字符串为行
 	lines := strings.Split(out, "\n")
@@ -318,7 +318,7 @@ func (s *EnvService) GetVirtualenvPipPackage(path string) ([]map[string]string, 
 			name := parts[0]
 			version := parts[1]
 
-			pkg := map[string]string{
+			pkg := map[string]interface{}{
 				"name":    name,
 				"version": version,
 			}
@@ -355,9 +355,29 @@ func (s *EnvService) GetPackageVersions(packageName string) ([]string, error) {
 	for version := range result.Releases {
 		versions = append(versions, version)
 	}
-
-	// 对版本号进行排序
-	sort.Strings(versions)
-	fmt.Println(versions)
 	return versions, nil
+}
+
+func (s *EnvService) UninstallPackage(packageName, virtualenvPath string) error {
+	out, err := util.ExecCmd(fmt.Sprintf("%s/bin/pip", virtualenvPath), "uninstall", "-y", packageName)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall package '%s': %v\nOutput: %s", packageName, err, out)
+	}
+	return nil
+}
+
+func (s *EnvService) InstallPackage(packageName, virtualenvPath, packageVersion, installationSource string) error {
+	installShell := fmt.Sprintf("%s/bin/pip install %s", virtualenvPath, packageName)
+	if packageVersion != "" {
+		installShell = fmt.Sprintf("%s==%s", installShell, packageVersion)
+	}
+	if installationSource != "" {
+		installShell = fmt.Sprintf("%s -i %s", installShell, installationSource)
+	}
+	//"sh", "-c",
+	out, err := util.ExecCmd("sh", "-c", installShell)
+	if err != nil {
+		return fmt.Errorf("failed to install package '%s': %v\nOutput: %s", packageName, err, out)
+	}
+	return nil
 }

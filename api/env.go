@@ -43,7 +43,6 @@ func (h *EnvHandler) GetPyenvPythonVersionHandler(c *gin.Context) {
 	var err error
 	if queryType == "pyenv" {
 		pythonVersions, err = h.EnvService.GetPyenvPythonVersions()
-
 	} else if queryType == "virtual" {
 		pythonVersions, err = h.EnvService.GetVirtualPythonVersions()
 	} else {
@@ -60,7 +59,7 @@ func (h *EnvHandler) GetPyenvPythonVersionHandler(c *gin.Context) {
 
 func (h *EnvHandler) InstallPythonHandler(c *gin.Context) {
 	var versionData struct {
-		Version string `json:"version"`
+		Version string `json:"version" binding:"required"`
 	}
 	err := c.ShouldBindJSON(&versionData)
 	if err != nil {
@@ -89,8 +88,9 @@ func (h *EnvHandler) InstallPythonHandler(c *gin.Context) {
 
 		// 访问 map 中的值
 		version := paramsMap["version"]
-
-		if version == versionData.Version {
+		status := paramsMap["status"]
+		fmt.Println(version, status)
+		if version == versionData.Version && status == "running" {
 			flag = true
 		}
 		return true
@@ -132,7 +132,7 @@ func (h *EnvHandler) GetRemotePythonVersionHandler(c *gin.Context) {
 
 func (h *EnvHandler) SetVersionGlobalHandler(c *gin.Context) {
 	var versionData struct {
-		Version string `json:"version"`
+		Version string `json:"version" binding:"required"`
 	}
 	err := c.ShouldBindJSON(&versionData)
 	if err != nil {
@@ -149,7 +149,7 @@ func (h *EnvHandler) SetVersionGlobalHandler(c *gin.Context) {
 
 func (h *EnvHandler) DeletePythonVersionHandler(c *gin.Context) {
 	var versionData struct {
-		Version string `json:"version"`
+		Version string `json:"version" binding:"required"`
 	}
 	err := c.ShouldBindJSON(&versionData)
 	if err != nil {
@@ -166,8 +166,8 @@ func (h *EnvHandler) DeletePythonVersionHandler(c *gin.Context) {
 
 func (h *EnvHandler) CreateVirtualenvHandler(c *gin.Context) {
 	var versionData struct {
-		EnvName string `json:"env_name"`
-		Version string `json:"version"`
+		EnvName string `json:"env_name" binding:"required"`
+		Version string `json:"version" binding:"required"`
 	}
 	err := c.ShouldBindJSON(&versionData)
 	if err != nil {
@@ -185,7 +185,7 @@ func (h *EnvHandler) CreateVirtualenvHandler(c *gin.Context) {
 
 func (h *EnvHandler) DeleteVirtualenvHandler(c *gin.Context) {
 	var versionData struct {
-		EnvName string `json:"env_name"`
+		EnvName string `json:"env_name" binding:"required"`
 	}
 	err := c.ShouldBindJSON(&versionData)
 	if err != nil {
@@ -208,13 +208,16 @@ func (h *EnvHandler) GetVirtualenvByNameHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if env == nil {
 		ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("未查询到虚拟环境:%s", envName))
+		return
 	}
 	SuccessResponse(c, env)
 }
 
 func (h *EnvHandler) VirtualenvPipInstallPackagesHandler(c *gin.Context) {
+	var packages = make([]map[string]interface{}, 0)
 	var envData struct {
 		EnvPath string `json:"env_path"`
 	}
@@ -223,8 +226,7 @@ func (h *EnvHandler) VirtualenvPipInstallPackagesHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	packages, err := h.EnvService.GetVirtualenvPipPackage(envData.EnvPath)
-
+	packages, err = h.EnvService.GetVirtualenvPipPackage(envData.EnvPath)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -233,20 +235,50 @@ func (h *EnvHandler) VirtualenvPipInstallPackagesHandler(c *gin.Context) {
 }
 
 func (h *EnvHandler) GetPackageVersionsHandler(c *gin.Context) {
-	var envData struct {
-		PackageName string `json:"package_name"`
-	}
-	err := c.ShouldBindJSON(&envData)
-	if err != nil {
-		ErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
-	}
-	packages, err := h.EnvService.GetPackageVersions(envData.PackageName)
-
+	packageName := c.Query("package_name")
+	packages, err := h.EnvService.GetPackageVersions(packageName)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	SuccessResponse(c, packages)
 
+}
+
+func (h *EnvHandler) UninstallPackageHandler(c *gin.Context) {
+	var uninstallRequestData struct {
+		PackageName    string `json:"package_name" binding:"required"`
+		VirtualenvPath string `json:"virtualenv_path" binding:"required"`
+	}
+	err := c.ShouldBindJSON(&uninstallRequestData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.EnvService.UninstallPackage(uninstallRequestData.PackageName, uninstallRequestData.VirtualenvPath)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, true)
+}
+
+func (h *EnvHandler) InstallPackageHandler(c *gin.Context) {
+	var installRequestData struct {
+		PackageName        string `json:"package_name" binding:"required"`
+		VirtualenvPath     string `json:"virtualenv_path" binding:"required"`
+		PackageVersion     string `json:"package_version" binding:"required"`
+		InstallationSource string `json:"installation_source"`
+	}
+	err := c.ShouldBindJSON(&installRequestData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.EnvService.InstallPackage(installRequestData.PackageName, installRequestData.VirtualenvPath, installRequestData.PackageVersion, installRequestData.InstallationSource)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, true)
 }
