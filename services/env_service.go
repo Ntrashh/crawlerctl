@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Ntrashh/crawlerctl/util"
+	"io"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -346,7 +347,12 @@ func (s *EnvService) GetPackageVersions(packageName string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("无法发送请求：%v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("close Body error")
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("无法获取包信息，状态码：%d", resp.StatusCode)
