@@ -30,6 +30,7 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.GET("/package_versions", envHandler.GetPackageVersionsHandler)
 		envRoutes.POST("/uninstall_packages", envHandler.UninstallPackageHandler)
 		envRoutes.POST("/install_packages", envHandler.InstallPackageHandler)
+		envRoutes.POST("/install_requirements", envHandler.InstallRequirementsHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")

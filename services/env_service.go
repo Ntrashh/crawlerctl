@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"github.com/Ntrashh/crawlerctl/util"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -393,6 +396,65 @@ func (s *EnvService) InstallPackage(packageName, virtualenvPath, packageVersion,
 	out, err := util.ExecCmd("sh", "-c", installShell)
 	if err != nil {
 		return fmt.Errorf("failed to install package '%s': %v\nOutput: %s", packageName, err, out)
+	}
+	return nil
+}
+
+func saveFileToTemp(file *multipart.FileHeader) (string, error) {
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer func(src multipart.File) {
+		err := src.Close()
+		if err != nil {
+		}
+	}(src)
+
+	tempFilePath := filepath.Join(os.TempDir(), file.Filename)
+	dst, err := os.Create(tempFilePath)
+	if err != nil {
+		return "", err
+	}
+	defer func(dst *os.File) {
+		err := dst.Close()
+		if err != nil {
+
+		}
+	}(dst)
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return "", err
+	}
+	return tempFilePath, nil
+}
+
+func (s *EnvService) InstallRequirements(virtualenvPath, installSource string, file *multipart.FileHeader) error {
+	// 保存文件到临时目录
+	tempFilePath, err := saveFileToTemp(file)
+	if err != nil {
+		return fmt.Errorf("无法保存上传的文件：%v", err)
+	}
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+		}
+	}(tempFilePath) // 确保函数结束后删除临时文件
+	err = s.executeInstallCommand(virtualenvPath, tempFilePath, installSource)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *EnvService) executeInstallCommand(pipPath, requirementsPath, installSource string) error {
+	installCommand := fmt.Sprintf("%s/bin/pip install -r %s ", pipPath, requirementsPath)
+	installCommand = fmt.Sprintf("%s -i %s", installCommand, installSource)
+	fmt.Println(installCommand)
+	output, err := util.ExecCmd("sh", "-c", installCommand)
+	fmt.Println(output)
+	if err != nil {
+		return fmt.Errorf("%s", output)
 	}
 	return nil
 }

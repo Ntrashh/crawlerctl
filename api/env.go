@@ -8,6 +8,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"path/filepath"
 )
 
 type EnvHandler struct {
@@ -281,4 +282,41 @@ func (h *EnvHandler) InstallPackageHandler(c *gin.Context) {
 		return
 	}
 	SuccessResponse(c, true)
+}
+
+func (h *EnvHandler) InstallRequirementsHandler(c *gin.Context) {
+	// 获取 pip_path 和 install_source
+	virtualenvPath := c.PostForm("virtualenv_path")
+	InstallationSource := c.PostForm("installation_source")
+
+	if virtualenvPath == "" {
+		ErrorResponse(c, http.StatusBadRequest, "缺少 pip_path 参数")
+		return
+	}
+
+	if InstallationSource == "" {
+		ErrorResponse(c, http.StatusBadRequest, "缺少 install_source 参数")
+		return
+	}
+
+	// 获取上传的文件
+	file, err := c.FormFile("file")
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 校验文件类型和名称
+	if filepath.Ext(file.Filename) != ".txt" || file.Filename != "requirements.txt" {
+		ErrorResponse(c, http.StatusBadRequest, "请上传 requirements.txt 文件")
+		return
+	}
+
+	err = h.EnvService.InstallRequirements(virtualenvPath, InstallationSource, file)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, true)
+
 }
