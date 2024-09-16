@@ -400,7 +400,7 @@ func (s *EnvService) InstallPackage(packageName, virtualenvPath, packageVersion,
 	return nil
 }
 
-func saveFileToTemp(file *multipart.FileHeader) (string, error) {
+func (s *EnvService) SaveFileToTemp(file *multipart.FileHeader) (string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", err
@@ -431,7 +431,7 @@ func saveFileToTemp(file *multipart.FileHeader) (string, error) {
 
 func (s *EnvService) InstallRequirements(virtualenvPath, installSource string, file *multipart.FileHeader) error {
 	// 保存文件到临时目录
-	tempFilePath, err := saveFileToTemp(file)
+	tempFilePath, err := s.SaveFileToTemp(file)
 	if err != nil {
 		return fmt.Errorf("无法保存上传的文件：%v", err)
 	}

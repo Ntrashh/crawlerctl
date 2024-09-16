@@ -7,6 +7,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/task"
 	"github.com/Ntrashh/crawlerctl/util"
 	"github.com/gin-gonic/gin"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 )
@@ -312,11 +313,29 @@ func (h *EnvHandler) InstallRequirementsHandler(c *gin.Context) {
 		return
 	}
 
-	err = h.EnvService.InstallRequirements(virtualenvPath, InstallationSource, file)
-	if err != nil {
-		ErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
-	}
-	SuccessResponse(c, true)
+	taskFunc := func(params interface{}) (interface{}, error) {
+		p := params.(map[string]interface{})
+		taskFuncVirtualenvPath := p["virtualenvPath"].(string)
+		taskFuncInstallationSource := p["installationSource"].(string)
+		taskFuncTempFilePath := p["tempFile"].(*multipart.FileHeader)
 
+		// 调用服务层的 InstallPyenvPython 方法
+		err = h.EnvService.InstallRequirements(taskFuncVirtualenvPath, taskFuncInstallationSource, taskFuncTempFilePath)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{
+			"message": "安装成功",
+		}, nil
+
+	}
+
+	// 启动任务并传递参数
+	taskID := task.StartTask(taskFunc, map[string]interface{}{
+		"virtualenvPath":     virtualenvPath,
+		"installationSource": InstallationSource,
+		"tempFile":           file,
+	})
+
+	SuccessResponse(c, taskID)
 }
