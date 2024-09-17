@@ -32,7 +32,13 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.POST("/install_packages", envHandler.InstallPackageHandler)
 		envRoutes.POST("/install_requirements", envHandler.InstallRequirementsHandler)
 	}
-
+	projectService := services.NewProjectService()
+	projectHandler := api.NewProjectHandler(projectService)
+	projectRoutes := router.Group("/projects")
+	projectRoutes.Use(middleware.AuthMiddleware())
+	{
+		projectRoutes.POST("/add_project", projectHandler.AddProject)
+	}
 	taskRoutes := router.Group("/tasks")
 	{
 		taskRoutes.GET("/task_status", api.GetTaskStatus)
