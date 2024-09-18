@@ -9,11 +9,21 @@ import (
 type ProjectStorage interface {
 	Create(project *models.Project) error
 	GetByName(name string) (*models.Project, error)
+	GetByVersion(version string) ([]models.Project, error)
 	GetAll() ([]models.Project, error)
 	DeleteByID(id uint) error
 }
 type projectStorage struct {
 	// 可以添加依赖，例如数据库连接
+}
+
+func (p projectStorage) GetByVersion(version string) ([]models.Project, error) {
+	var projects []models.Project
+	result := database.DB.Where("virtualenv_version = ?", version).Find(&projects)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return projects, nil
 }
 
 func (p projectStorage) DeleteByID(id uint) error {

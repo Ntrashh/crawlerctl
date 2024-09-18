@@ -19,11 +19,11 @@ func NewProjectHandler(projectService *services.ProjectService) *ProjectHandler 
 	}
 }
 
-func (p *ProjectHandler) ListProjects(c *gin.Context) {
+func (p *ProjectHandler) ListProjectsHandler(c *gin.Context) {
 	SuccessResponse(c, "")
 }
 
-func (p *ProjectHandler) AddProject(c *gin.Context) {
+func (p *ProjectHandler) AddProjectHandler(c *gin.Context) {
 	// 获取表单参数
 	projectName := c.PostForm("project_name")
 	virtualEnvName := c.PostForm("virtualenv_name")
@@ -54,7 +54,7 @@ func (p *ProjectHandler) AddProject(c *gin.Context) {
 	SuccessResponse(c, "文件上传并解压成功")
 }
 
-func (p *ProjectHandler) GetAllProjects(c *gin.Context) {
+func (p *ProjectHandler) GetAllProjectsHandler(c *gin.Context) {
 	projects, err := p.ProjectService.GetAllProjects()
 	if err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "获取项目列表失败")
@@ -63,7 +63,7 @@ func (p *ProjectHandler) GetAllProjects(c *gin.Context) {
 	SuccessResponse(c, projects)
 }
 
-func (p *ProjectHandler) DeleteProject(c *gin.Context) {
+func (p *ProjectHandler) DeleteProjectHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	// 将字符串解析为 uint
 	idUint64, err := strconv.ParseUint(idStr, 10, 32)
@@ -81,4 +81,23 @@ func (p *ProjectHandler) DeleteProject(c *gin.Context) {
 	}
 
 	SuccessResponse(c, "项目已成功删除")
+}
+
+func (p *ProjectHandler) ProjectsByVersionHandler(c *gin.Context) {
+	version := c.Query("version")
+	if version == "" {
+		ErrorResponse(c, http.StatusBadRequest, "version不能为空")
+		return
+	}
+	projects, err := p.ProjectService.ProjectsByVersion(version)
+
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	result := true
+	if len(projects) == 0 {
+		result = false
+	}
+	SuccessResponse(c, result)
 }

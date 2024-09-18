@@ -39,9 +39,10 @@ func RegisterRoutes(router *gin.Engine) {
 	projectRoutes := router.Group("/projects")
 	projectRoutes.Use(middleware.AuthMiddleware())
 	{
-		projectRoutes.GET("/projects", projectHandler.GetAllProjects)
-		projectRoutes.POST("/add_project", projectHandler.AddProject)
-		projectRoutes.DELETE("/:id", projectHandler.DeleteProject)
+		projectRoutes.GET("/projects", projectHandler.GetAllProjectsHandler)
+		projectRoutes.POST("/add_project", projectHandler.AddProjectHandler)
+		projectRoutes.DELETE("/:id", projectHandler.DeleteProjectHandler)
+		projectRoutes.GET("/projects_by_version", projectHandler.ProjectsByVersionHandler)
 	}
 	taskRoutes := router.Group("/tasks")
 	{

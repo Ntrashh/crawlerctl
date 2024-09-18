@@ -42,9 +42,9 @@ func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualE
 	}
 	project := &models.Project{
 		ProjectName:       projectName,
-		VirtualEnvName:    virtualEnvName,
-		VirtualEnvPath:    virtualEnvPath,
-		VirtualEnvVersion: virtualEnvVersion,
+		VirtualenvName:    virtualEnvName,
+		VirtualenvPath:    virtualEnvPath,
+		VirtualenvVersion: virtualEnvVersion,
 	}
 	existingProject, err := p.ProjectStorage.GetByName(projectName)
 	if err == nil && existingProject.ID != 0 {
@@ -70,4 +70,12 @@ func (p *ProjectService) DeleteProjectByID(id uint) error {
 		return err
 	}
 	return nil
+}
+
+func (p *ProjectService) ProjectsByVersion(virtualenv string) ([]models.Project, error) {
+	projects, err := p.ProjectStorage.GetByVersion(virtualenv)
+	if err != nil {
+		return nil, err
+	}
+	return projects, nil
 }

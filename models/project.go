@@ -5,9 +5,9 @@ import "gorm.io/gorm"
 type Project struct {
 	gorm.Model
 	ProjectName       string `gorm:"uniqueIndex"`
-	VirtualEnvName    string
-	VirtualEnvPath    string
-	VirtualEnvVersion string
+	VirtualenvName    string
+	VirtualenvPath    string
+	VirtualenvVersion string
 }
 
 func (Project) TableName() string {
