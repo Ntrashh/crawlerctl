@@ -101,3 +101,23 @@ func (p *ProjectHandler) ProjectsByVersionHandler(c *gin.Context) {
 	}
 	SuccessResponse(c, result)
 }
+
+func (p *ProjectHandler) GetFolderContentsHandler(c *gin.Context) {
+	folderPath := c.Query("folderPath")
+	folderTree, err := p.ProjectService.GetFolderTree(folderPath)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, folderTree)
+}
+
+func (p *ProjectHandler) ReadFileHandler(c *gin.Context) {
+	filePath := c.Query("filePath")
+	content, err := p.ProjectService.ReadFile(filePath)
+	if err != nil {
+		ErrorResponse(c, http.StatusInternalServerError, "读取文件失败")
+		return
+	}
+	SuccessResponse(c, content)
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/models"
 	"github.com/Ntrashh/crawlerctl/storage"
 	"github.com/Ntrashh/crawlerctl/util"
+	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -87,4 +88,39 @@ func (p *ProjectService) ProjectsByVersion(virtualenv string) ([]models.Project,
 		return nil, err
 	}
 	return projects, nil
+}
+
+func (p *ProjectService) GetFolderTree(folderPath string) ([]map[string]interface{}, error) {
+	var tree []map[string]interface{}
+
+	files, err := ioutil.ReadDir(folderPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		node := map[string]interface{}{
+			"title":  file.Name(),
+			"key":    filepath.Join(folderPath, file.Name()),
+			"isLeaf": !file.IsDir(),
+		}
+		if file.IsDir() {
+			// 递归获取子目录
+			children, err := p.GetFolderTree(filepath.Join(folderPath, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			node["children"] = children
+		}
+		tree = append(tree, node)
+	}
+	return tree, nil
+}
+
+func (p *ProjectService) ReadFile(filePath string) (string, error) {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
