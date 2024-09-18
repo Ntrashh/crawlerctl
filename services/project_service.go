@@ -50,10 +50,24 @@ func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualE
 	if err == nil && existingProject.ID != 0 {
 		return fmt.Errorf("项目名称已存在")
 	}
+	// 调用仓储层保存项目
+
 	err = p.ProjectStorage.Create(project)
 	if err != nil {
 		return err
 	}
-	// 调用仓储层保存项目
+	return nil
+}
+
+func (p *ProjectService) GetAllProjects() ([]models.Project, error) {
+	return p.ProjectStorage.GetAll()
+}
+
+func (p *ProjectService) DeleteProjectByID(id uint) error {
+	// 调用仓储层删除项目
+	err := p.ProjectStorage.DeleteByID(id)
+	if err != nil {
+		return err
+	}
 	return nil
 }

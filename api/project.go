@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
+	"strconv"
 )
 
 type ProjectHandler struct {
@@ -51,4 +52,33 @@ func (p *ProjectHandler) AddProject(c *gin.Context) {
 		return
 	}
 	SuccessResponse(c, "文件上传并解压成功")
+}
+
+func (p *ProjectHandler) GetAllProjects(c *gin.Context) {
+	projects, err := p.ProjectService.GetAllProjects()
+	if err != nil {
+		ErrorResponse(c, http.StatusInternalServerError, "获取项目列表失败")
+		return
+	}
+	SuccessResponse(c, projects)
+}
+
+func (p *ProjectHandler) DeleteProject(c *gin.Context) {
+	idStr := c.Param("id")
+	// 将字符串解析为 uint
+	idUint64, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, "无效的项目 ID")
+		return
+	}
+	id := uint(idUint64)
+
+	// 调用服务层删除项目
+	err = p.ProjectService.DeleteProjectByID(id)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	SuccessResponse(c, "项目已成功删除")
 }

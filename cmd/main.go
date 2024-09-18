@@ -18,10 +18,10 @@ func main() {
 
 	// 添加 CORS 中间件
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},                      // 允许的前端地址
-		AllowMethods:     []string{"POST", "GET", "OPTIONS"}, // 允许的请求方法
-		AllowHeaders:     []string{"*"},                      // 允许的请求头
-		AllowCredentials: true,                               // 是否允许传递认证信息，比如 Cookies
+		AllowOrigins:     []string{"*"},                                // 允许的前端地址
+		AllowMethods:     []string{"POST", "GET", "OPTIONS", "DELETE"}, // 允许的请求方法
+		AllowHeaders:     []string{"*"},                                // 允许的请求头
+		AllowCredentials: true,                                         // 是否允许传递认证信息，比如 Cookies
 	}))
 
 	// 注册所有路由
