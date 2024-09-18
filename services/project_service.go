@@ -1,6 +1,9 @@
 package services
 
 import (
+	"fmt"
+	"github.com/Ntrashh/crawlerctl/models"
+	"github.com/Ntrashh/crawlerctl/storage"
 	"github.com/Ntrashh/crawlerctl/util"
 	"mime/multipart"
 	"os"
@@ -8,10 +11,13 @@ import (
 )
 
 type ProjectService struct {
+	ProjectStorage storage.ProjectStorage
 }
 
-func NewProjectService() *ProjectService {
-	return &ProjectService{}
+func NewProjectService(projectStorage storage.ProjectStorage) *ProjectService {
+	return &ProjectService{
+		ProjectStorage: projectStorage,
+	}
 }
 
 func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualEnvPath, virtualEnvVersion string, file *multipart.FileHeader) error {
@@ -34,5 +40,20 @@ func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualE
 	if err != nil {
 		return err
 	}
+	project := &models.Project{
+		ProjectName:       projectName,
+		VirtualEnvName:    virtualEnvName,
+		VirtualEnvPath:    virtualEnvPath,
+		VirtualEnvVersion: virtualEnvVersion,
+	}
+	existingProject, err := p.ProjectStorage.GetByName(projectName)
+	if err == nil && existingProject.ID != 0 {
+		return fmt.Errorf("项目名称已存在")
+	}
+	err = p.ProjectStorage.Create(project)
+	if err != nil {
+		return err
+	}
+	// 调用仓储层保存项目
 	return nil
 }

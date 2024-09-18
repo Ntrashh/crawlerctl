@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Ntrashh/crawlerctl/config"
+	"github.com/Ntrashh/crawlerctl/database"
 	routes "github.com/Ntrashh/crawlerctl/routers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 func main() {
 
 	config.LoadConfig()
+	database.InitDatabase()
 	// 初始化 Gin
 	router := gin.Default()
 

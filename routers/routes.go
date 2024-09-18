@@ -4,6 +4,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/api"
 	"github.com/Ntrashh/crawlerctl/middleware"
 	"github.com/Ntrashh/crawlerctl/services"
+	"github.com/Ntrashh/crawlerctl/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,7 +33,8 @@ func RegisterRoutes(router *gin.Engine) {
 		envRoutes.POST("/install_packages", envHandler.InstallPackageHandler)
 		envRoutes.POST("/install_requirements", envHandler.InstallRequirementsHandler)
 	}
-	projectService := services.NewProjectService()
+	projectStorage := storage.NewProjectStorage()
+	projectService := services.NewProjectService(projectStorage)
 	projectHandler := api.NewProjectHandler(projectService)
 	projectRoutes := router.Group("/projects")
 	projectRoutes.Use(middleware.AuthMiddleware())
