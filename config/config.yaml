@@ -8,3 +8,4 @@ auth:
 jwt:
   secret: "WmgLFDbqup8iBz3ftRjDtG"
   expire_hours: 72
+path: "/opt/"

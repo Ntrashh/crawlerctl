@@ -48,7 +48,7 @@ func (p *ProjectHandler) AddProjectHandler(c *gin.Context) {
 	}
 	err = p.ProjectService.AddProjectService(projectName, virtualEnvName, virtualEnvPath, virtualEnvVersion, file)
 	if err != nil {
-		ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("解压文件失败：%v", err))
+		ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("上传文件失败：%v", err))
 		return
 	}
 	SuccessResponse(c, "文件上传并解压成功")

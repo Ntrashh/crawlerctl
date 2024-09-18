@@ -19,6 +19,7 @@ type AuthConfig struct {
 type Config struct {
 	Auth AuthConfig
 	JWT  JWTConfig
+	Path string
 }
 
 var AppConfig Config
