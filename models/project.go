@@ -8,6 +8,7 @@ type Project struct {
 	VirtualenvName    string
 	VirtualenvPath    string
 	VirtualenvVersion string
+	SavePath          string
 }
 
 func (Project) TableName() string {

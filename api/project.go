@@ -121,3 +121,19 @@ func (p *ProjectHandler) ReadFileHandler(c *gin.Context) {
 	}
 	SuccessResponse(c, content)
 }
+
+func (p *ProjectHandler) ProjectByIdHandler(c *gin.Context) {
+	id := c.Param("id")
+	idUint64, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	project, err := p.ProjectService.ProjectById(uint(idUint64))
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+
+		return
+	}
+	SuccessResponse(c, project)
+}

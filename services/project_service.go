@@ -23,11 +23,13 @@ func NewProjectService(projectStorage storage.ProjectStorage) *ProjectService {
 }
 
 func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualEnvPath, virtualEnvVersion string, file *multipart.FileHeader) error {
+	savePath := filepath.Join(fmt.Sprintf("%s/.crawlerctl/projects", config.AppConfig.Path), projectName) // 请根据实际情况修改
 	project := &models.Project{
 		ProjectName:       projectName,
 		VirtualenvName:    virtualEnvName,
 		VirtualenvPath:    virtualEnvPath,
 		VirtualenvVersion: virtualEnvVersion,
+		SavePath:          savePath,
 	}
 	existingProject, err := p.ProjectStorage.GetByName(projectName)
 	if err == nil && existingProject.ID != 0 {
@@ -47,12 +49,11 @@ func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualE
 
 		}
 	}(tempFilePath)
-	destDir := filepath.Join(fmt.Sprintf("%s/.crawlerctl/projects", config.AppConfig.Path), projectName) // 请根据实际情况修改
-	err = os.MkdirAll(destDir, os.ModePerm)
+	err = os.MkdirAll(savePath, os.ModePerm)
 	if err != nil {
 		return err
 	}
-	err = util.UnzipFile(tempFilePath, destDir)
+	err = util.UnzipFile(tempFilePath, savePath)
 	if err != nil {
 		return err
 	}
@@ -99,6 +100,10 @@ func (p *ProjectService) GetFolderTree(folderPath string) ([]map[string]interfac
 	}
 
 	for _, file := range files {
+		// 检查文件是否没有扩展名，如果没有则跳过该文件
+		if !file.IsDir() && filepath.Ext(file.Name()) == "" {
+			continue
+		}
 		node := map[string]interface{}{
 			"title":  file.Name(),
 			"key":    filepath.Join(folderPath, file.Name()),
@@ -123,4 +128,11 @@ func (p *ProjectService) ReadFile(filePath string) (string, error) {
 		return "", err
 	}
 	return string(content), nil
+}
+func (p *ProjectService) ProjectById(id uint) (models.Project, error) {
+	project, err := p.ProjectStorage.GetByID(id)
+	if err != nil {
+		return models.Project{}, err
+	}
+	return *project, nil
 }

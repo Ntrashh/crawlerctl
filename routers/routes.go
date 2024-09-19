@@ -45,6 +45,7 @@ func RegisterRoutes(router *gin.Engine) {
 		projectRoutes.GET("/projects_by_version", projectHandler.ProjectsByVersionHandler)
 		projectRoutes.GET("/get_folders", projectHandler.GetFolderContentsHandler)
 		projectRoutes.GET("/read_file", projectHandler.ReadFileHandler)
+		projectRoutes.GET("/:id", projectHandler.ProjectByIdHandler)
 	}
 	taskRoutes := router.Group("/tasks")
 	{
