@@ -2,6 +2,7 @@ package util
 
 import (
 	"archive/zip"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -121,4 +122,17 @@ func isValidZipPath(filePath, destDir string) bool {
 	}
 
 	return filepath.HasPrefix(absFilePath, absDestDir)
+}
+
+func Base64Encode(text string) string {
+	return base64.StdEncoding.EncodeToString([]byte(text))
+}
+
+func Base64Decode(text string) string {
+	decodedBytes, err := base64.StdEncoding.DecodeString(text)
+	if err != nil {
+		fmt.Println("解码错误:", err)
+		return ""
+	}
+	return string(decodedBytes)
 }

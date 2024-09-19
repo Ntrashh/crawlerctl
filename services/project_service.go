@@ -62,7 +62,27 @@ func (p *ProjectService) AddProjectService(projectName, virtualEnvName, virtualE
 }
 
 func (p *ProjectService) GetAllProjects() ([]models.Project, error) {
-	return p.ProjectStorage.GetAll()
+	allProjects, err := p.ProjectStorage.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// 过滤掉文件夹不存在的项目
+	var validProjects = make([]models.Project, 0)
+	for _, project := range allProjects {
+		// 使用 os.Stat 检查文件夹是否存在
+		if _, err := os.Stat(project.SavePath); os.IsNotExist(err) {
+			// 文件夹不存在，跳过该项目
+			err := p.ProjectStorage.DeleteByID(project.ID)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		// 文件夹存在，保留该项目
+		validProjects = append(validProjects, project)
+	}
+	return validProjects, nil
 }
 
 func (p *ProjectService) DeleteProjectByID(id uint) error {
@@ -135,4 +155,12 @@ func (p *ProjectService) ProjectById(id uint) (models.Project, error) {
 		return models.Project{}, err
 	}
 	return *project, nil
+}
+
+func (p *ProjectService) SaveFile(filePath, content string) error {
+	err := ioutil.WriteFile(filePath, []byte(util.Base64Decode(content)), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to save code to file: %w", err)
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/Ntrashh/crawlerctl/services"
+	"github.com/Ntrashh/crawlerctl/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
@@ -119,7 +120,7 @@ func (p *ProjectHandler) ReadFileHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusInternalServerError, "读取文件失败")
 		return
 	}
-	SuccessResponse(c, content)
+	SuccessResponse(c, util.Base64Encode(content))
 }
 
 func (p *ProjectHandler) ProjectByIdHandler(c *gin.Context) {
@@ -136,4 +137,22 @@ func (p *ProjectHandler) ProjectByIdHandler(c *gin.Context) {
 		return
 	}
 	SuccessResponse(c, project)
+}
+
+func (p *ProjectHandler) SaveFileHandler(c *gin.Context) {
+	var saveFileData struct {
+		FilePath string `json:"file_path" binding:"required"`
+		Content  string `json:"content" binding:"required"`
+	}
+	err := c.ShouldBind(&saveFileData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = p.ProjectService.SaveFile(saveFileData.FilePath, saveFileData.Content)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, true)
 }
