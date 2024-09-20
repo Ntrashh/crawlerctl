@@ -48,6 +48,15 @@ func RegisterRoutes(router *gin.Engine) {
 		projectRoutes.GET("/:id", projectHandler.ProjectByIdHandler)
 		projectRoutes.POST("/save_file", projectHandler.SaveFileHandler)
 	}
+	gitStorage := storage.NewGitStore()
+	gitService := services.NewGitService(gitStorage)
+	gitHandler := api.NewGitHandler(gitService)
+	gitRoutes := router.Group("/git")
+	gitRoutes.Use(middleware.AuthMiddleware())
+	{
+		gitRoutes.GET("/:id", gitHandler.GitByProjectIdHandler)
+	}
+
 	taskRoutes := router.Group("/tasks")
 	{
 		taskRoutes.GET("/task_status", api.GetTaskStatus)
