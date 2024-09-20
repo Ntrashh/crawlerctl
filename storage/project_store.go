@@ -48,7 +48,7 @@ func (p projectStorage) DeleteByID(id uint) error {
 }
 
 func (p projectStorage) GetAll() ([]models.Project, error) {
-	var projects []models.Project
+	var projects = make([]models.Project, 0)
 	result := database.DB.Find(&projects)
 	if result.Error != nil {
 		return nil, result.Error
