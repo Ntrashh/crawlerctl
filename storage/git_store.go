@@ -6,19 +6,24 @@ import (
 )
 
 type GitStorage interface {
-	GetGitByProjectID(projectID uint) (*models.Git, error)
+	GetGitByProjectID(projectID int) (*models.Git, error)
+	CreateGit(git *models.Git) error
 }
 
 type gitStore struct {
 }
 
-func (g gitStore) GetGitByProjectID(projectID uint) (*models.Git, error) {
+func (g gitStore) GetGitByProjectID(projectID int) (*models.Git, error) {
 	var git models.Git
-	result := database.DB.Where("projectID = ?", projectID).First(&git)
+	result := database.DB.Where("project_id = ?", projectID).First(&git)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &git, nil
+}
+
+func (g gitStore) CreateGit(git *models.Git) error {
+	return database.DB.Create(&git).Error
 }
 
 func NewGitStore() GitStorage {

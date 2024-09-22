@@ -420,9 +420,7 @@ func (s *EnvService) InstallRequirements(virtualenvPath, installSource string, f
 func (s *EnvService) executeInstallCommand(pipPath, requirementsPath, installSource string) error {
 	installCommand := fmt.Sprintf("%s/bin/pip install -r %s ", pipPath, requirementsPath)
 	installCommand = fmt.Sprintf("%s -i %s", installCommand, installSource)
-	fmt.Println(installCommand)
 	output, err := util.ExecCmd("sh", "-c", installCommand)
-	fmt.Println(output)
 	if err != nil {
 		return fmt.Errorf("%s", output)
 	}

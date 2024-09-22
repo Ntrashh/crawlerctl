@@ -5,9 +5,11 @@ import "gorm.io/gorm"
 type Git struct {
 	gorm.Model
 	ProjectID int `gorm:"index"`
-	GitType   string
 	GitPath   string
 	UserName  string
-	Password  string
-	GitBranch string
+	Password  string `gorm:"type:varchar(255);not null" json:"-"`
+}
+
+func (Git) TableName() string {
+	return "git"
 }

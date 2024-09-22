@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"encoding/base64"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"mime/multipart"
 	"os"
@@ -21,8 +22,11 @@ func SaveFileToTemp(file *multipart.FileHeader) (string, error) {
 		if err != nil {
 		}
 	}(src)
-
-	tempFilePath := filepath.Join(os.TempDir(), file.Filename)
+	dir, err := os.MkdirTemp("", ".crawlerctl")
+	if err != nil {
+		return "", err
+	}
+	tempFilePath := filepath.Join(dir, file.Filename)
 	dst, err := os.Create(tempFilePath)
 	if err != nil {
 		return "", err
@@ -45,7 +49,11 @@ func UnzipFile(zipFilePath, destDir string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func(r *zip.ReadCloser) {
+		err := r.Close()
+		if err != nil {
+		}
+	}(r)
 
 	var commonPrefix string
 
@@ -135,4 +143,13 @@ func Base64Decode(text string) string {
 		return ""
 	}
 	return string(decodedBytes)
+}
+
+func CreateTempDir() string {
+	newUUID, err := uuid.NewUUID()
+	if err != nil {
+		return ""
+	}
+	tempDir, _ := os.MkdirTemp("", newUUID.String())
+	return tempDir
 }

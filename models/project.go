@@ -16,10 +16,3 @@ type Project struct {
 func (Project) TableName() string {
 	return "project"
 }
-
-func Migrate(db *gorm.DB) {
-	err := db.AutoMigrate(&Project{})
-	if err != nil {
-		return
-	}
-}

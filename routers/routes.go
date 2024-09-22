@@ -55,6 +55,8 @@ func RegisterRoutes(router *gin.Engine) {
 	gitRoutes.Use(middleware.AuthMiddleware())
 	{
 		gitRoutes.GET("/:id", gitHandler.GitByProjectIdHandler)
+		gitRoutes.POST("/create_git", gitHandler.CreateGitConfigHandler)
+		gitRoutes.GET("/remote_branches/:id", gitHandler.RemoteBranchesHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")
