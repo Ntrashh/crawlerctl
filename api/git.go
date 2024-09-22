@@ -67,3 +67,21 @@ func (g GitHandler) RemoteBranchesHandler(c *gin.Context) {
 	}
 	SuccessResponse(c, branches)
 }
+
+func (g GitHandler) RemoteBranchCommitsHandler(c *gin.Context) {
+	projectId := c.Query("id")
+	branchName := c.Query("branch_name")
+
+	projectIdUint64, err := strconv.ParseInt(projectId, 10, 32)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	commits, err := g.gitService.GetRemoteBranchCommits(int(projectIdUint64), 5, branchName)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, commits)
+
+}

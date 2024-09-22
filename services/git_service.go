@@ -7,6 +7,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"os"
 )
@@ -55,7 +56,7 @@ func (g GitService) CreateGit(projectId int, gitPath, username, password string)
 // ValidateHTTPConfig 使用 go-git 验证 HTTP Git 配置
 func (g GitService) ValidateHTTPConfig(config *models.Git) error {
 	tempDir := util.CreateTempDir()
-	_, err := g.createRepository(tempDir, config)
+	_, err := g.createRepository(tempDir, "", 1, config)
 	if err != nil {
 		return fmt.Errorf("验证 HTTP 配置失败: %w", err)
 	}
@@ -63,17 +64,18 @@ func (g GitService) ValidateHTTPConfig(config *models.Git) error {
 	return nil
 }
 
-func (g GitService) createRepository(savePath string, gitConfig *models.Git) (*git.Repository, error) {
+func (g GitService) createRepository(savePath, remoteName string, depth int, gitConfig *models.Git) (*git.Repository, error) {
 	auth := &http.BasicAuth{
 		Username: gitConfig.UserName,
 		Password: gitConfig.Password,
 	}
 	repository, err := git.PlainClone(savePath, false, &git.CloneOptions{
-		URL:          gitConfig.GitPath,
-		Auth:         auth,
-		Depth:        1,
-		SingleBranch: false,
-		Tags:         git.NoTags,
+		URL:           gitConfig.GitPath,
+		Auth:          auth,
+		Depth:         depth,
+		ReferenceName: plumbing.NewBranchReferenceName(remoteName),
+		SingleBranch:  false,
+		Tags:          git.NoTags,
 	})
 	if err != nil {
 		return nil, err
@@ -88,7 +90,7 @@ func (g GitService) RemoteBranches(projectId int) (interface{}, error) {
 	}
 	tempDir := util.CreateTempDir()
 	defer os.RemoveAll(tempDir)
-	repository, err := g.createRepository(tempDir, gitConfig)
+	repository, err := g.createRepository(tempDir, "", 1, gitConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -105,4 +107,42 @@ func (g GitService) RemoteBranches(projectId int) (interface{}, error) {
 		return nil
 	})
 	return branches, nil
+}
+
+func (g GitService) GetRemoteBranchCommits(projectId, limit int, branchName string) ([]map[string]interface{}, error) {
+	gitConfig, err := g.GitStorage.GetGitByProjectID(projectId)
+	if err != nil {
+		return nil, err
+	}
+	tempDir := util.CreateTempDir()
+	defer os.RemoveAll(tempDir)
+	repository, err := g.createRepository(tempDir, branchName, limit, gitConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取引用
+	ref, err := repository.Reference(plumbing.NewBranchReferenceName(branchName), true)
+
+	if err != nil {
+		return nil, fmt.Errorf("无法获取引用: %w", err)
+	}
+	// 获取提交历史迭代器
+	commitIter, err := repository.Log(&git.LogOptions{From: ref.Hash()})
+	if err != nil {
+		return nil, fmt.Errorf("无法获取提交历史: %w", err)
+	}
+
+	commits := make([]map[string]interface{}, 0)
+	err = commitIter.ForEach(func(c *object.Commit) error {
+		commitMsg := map[string]interface{}{
+			"hash":       c.Hash.String(),
+			"author":     c.Committer.Name,
+			"commitTime": c.Committer.When.Format("2006-01-02 15:04:05"),
+			"message":    c.Message,
+		}
+		commits = append(commits, commitMsg)
+		return nil
+	})
+	return commits, nil
 }
