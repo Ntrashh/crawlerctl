@@ -47,6 +47,7 @@ func RegisterRoutes(router *gin.Engine) {
 		projectRoutes.GET("/read_file", projectHandler.ReadFileHandler)
 		projectRoutes.GET("/:id", projectHandler.ProjectByIdHandler)
 		projectRoutes.POST("/save_file", projectHandler.SaveFileHandler)
+		projectRoutes.POST("/reload_file", projectHandler.ReUploadHandler)
 	}
 	gitStorage := storage.NewGitStore()
 	gitService := services.NewGitService(gitStorage)
@@ -59,6 +60,7 @@ func RegisterRoutes(router *gin.Engine) {
 		gitRoutes.GET("/remote_branches/:id", gitHandler.RemoteBranchesHandler)
 		gitRoutes.GET("/remote_commits", gitHandler.RemoteBranchCommitsHandler)
 		gitRoutes.POST("/breach_pull", gitHandler.BranchPullHandler)
+
 	}
 
 	taskRoutes := router.Group("/tasks")

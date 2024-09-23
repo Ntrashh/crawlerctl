@@ -156,3 +156,30 @@ func (p *ProjectHandler) SaveFileHandler(c *gin.Context) {
 	}
 	SuccessResponse(c, true)
 }
+
+func (p *ProjectHandler) ReUploadHandler(c *gin.Context) {
+	SavePath := c.PostForm("save_path")
+	if SavePath == "" {
+		ErrorResponse(c, http.StatusBadRequest, "缺少必要的参数")
+		return
+	}
+
+	// 获取上传的文件
+	file, err := c.FormFile("file")
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, "无法获取上传的文件")
+		return
+	}
+
+	// 验证文件类型是否为 ZIP
+	if filepath.Ext(file.Filename) != ".zip" {
+		ErrorResponse(c, http.StatusBadRequest, "只能上传 ZIP 文件")
+		return
+	}
+	err = p.ProjectService.ReUploadProject(SavePath, file)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("重新上传文件失败：%v", err))
+		return
+	}
+	SuccessResponse(c, true)
+}

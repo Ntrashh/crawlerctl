@@ -6,6 +6,7 @@ import (
 	"github.com/Ntrashh/crawlerctl/models"
 	"github.com/Ntrashh/crawlerctl/storage"
 	"github.com/Ntrashh/crawlerctl/util"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"mime/multipart"
 	"os"
@@ -162,5 +163,37 @@ func (p *ProjectService) SaveFile(filePath, content string) error {
 	if err != nil {
 		return fmt.Errorf("failed to save code to file: %w", err)
 	}
+	return nil
+}
+
+func (p *ProjectService) ReUploadProject(savePath string, file *multipart.FileHeader) error {
+
+	newUUID, err := uuid.NewUUID()
+	var tempDir = fmt.Sprintf("/tmp/%s", newUUID.String())
+	defer os.RemoveAll(tempDir)
+	err = os.Rename(savePath, tempDir)
+	if err != nil {
+		return err
+	}
+
+	tempFilePath, err := util.SaveFileToTemp(file)
+	if err != nil {
+		return err
+	}
+	defer func(name, temp string) {
+		_ = os.Remove(name)
+		_ = os.Remove(temp)
+	}(tempFilePath, tempDir)
+	err = os.MkdirAll(savePath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	err = util.UnzipFile(tempFilePath, savePath)
+	if err != nil {
+		// 如果解压失败再移动回来
+		err = os.Rename(tempDir, savePath)
+		return err
+	}
+
 	return nil
 }
