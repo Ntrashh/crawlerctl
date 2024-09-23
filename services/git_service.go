@@ -9,6 +9,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/google/uuid"
+	"log"
 	"os"
 )
 
@@ -31,14 +33,16 @@ func (g GitService) GetGitByProjectID(projectID int) *models.Git {
 	return git
 }
 
-func (g GitService) CreateGit(projectId int, gitPath, username, password string) (*models.Git, error) {
-	gitConfig := &models.Git{
-		ProjectID: projectId,
-		GitPath:   gitPath,
-		UserName:  username,
-		Password:  password,
-	}
+func (g GitService) CreateGit(projectId int, gitPath, username, password, projectPath string) (*models.Git, error) {
+
 	byIdGitConfig := g.GetGitByProjectID(projectId)
+	gitConfig := &models.Git{
+		ProjectID:           projectId,
+		GitPath:             gitPath,
+		UserName:            username,
+		Password:            password,
+		LocalRepositoryPath: projectPath,
+	}
 	if byIdGitConfig != nil {
 		return byIdGitConfig, nil
 	}
@@ -68,6 +72,9 @@ func (g GitService) createRepository(savePath, remoteName string, depth int, git
 	auth := &http.BasicAuth{
 		Username: gitConfig.UserName,
 		Password: gitConfig.Password,
+	}
+	if remoteName == "" {
+		remoteName = "master"
 	}
 	repository, err := git.PlainClone(savePath, false, &git.CloneOptions{
 		URL:           gitConfig.GitPath,
@@ -145,4 +152,24 @@ func (g GitService) GetRemoteBranchCommits(projectId, limit int, branchName stri
 		return nil
 	})
 	return commits, nil
+}
+
+func (g GitService) BranchPull(projectId int, branchName string) (*models.Git, error) {
+	gitConfig, err := g.GitStorage.GetGitByProjectID(projectId)
+	if err != nil {
+		return nil, err
+	}
+	newUUID, err := uuid.NewUUID()
+	tempDir := fmt.Sprintf("/tmp/%s", newUUID.String())
+	defer os.RemoveAll(tempDir)
+	err = os.Rename(gitConfig.LocalRepositoryPath, tempDir)
+	if err != nil {
+		log.Fatalf("移动仓库到目标路径时出错: %v", err)
+	}
+	_, err = g.createRepository(gitConfig.LocalRepositoryPath, branchName, 1, gitConfig)
+	if err != nil {
+		err = os.Rename(tempDir, gitConfig.LocalRepositoryPath)
+		return nil, err
+	}
+	return gitConfig, nil
 }

@@ -1,19 +1,24 @@
 package api
 
 import (
+	"fmt"
+	"github.com/Ntrashh/crawlerctl/config"
 	"github.com/Ntrashh/crawlerctl/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
 type GitHandler struct {
-	gitService *services.GitService
+	gitService     *services.GitService
+	projectService *services.ProjectService
 }
 
-func NewGitHandler(gitService *services.GitService) *GitHandler {
+func NewGitHandler(gitService *services.GitService, projectService *services.ProjectService) *GitHandler {
 	return &GitHandler{
-		gitService: gitService,
+		gitService:     gitService,
+		projectService: projectService,
 	}
 }
 
@@ -45,7 +50,13 @@ func (g GitHandler) CreateGitConfigHandler(c *gin.Context) {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	gitConfig, err := g.gitService.CreateGit(gitConfigData.ProjectId, gitConfigData.GitPath, gitConfigData.Username, gitConfigData.Password)
+	project, err := g.projectService.ProjectById(uint(gitConfigData.ProjectId))
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, "项目不存在")
+		return
+	}
+	projectPath := filepath.Join(fmt.Sprintf("%s/.crawlerctl/projects/%s", config.AppConfig.Path, project.ProjectName))
+	gitConfig, err := g.gitService.CreateGit(gitConfigData.ProjectId, gitConfigData.GitPath, gitConfigData.Username, gitConfigData.Password, projectPath)
 	if err != nil {
 		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -84,4 +95,22 @@ func (g GitHandler) RemoteBranchCommitsHandler(c *gin.Context) {
 	}
 	SuccessResponse(c, commits)
 
+}
+
+func (g GitHandler) BranchPullHandler(c *gin.Context) {
+	var pullData struct {
+		ProjectId  int    `json:"project_id"`
+		BranchName string `json:"branch_name"`
+	}
+	err := c.ShouldBind(&pullData)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	gitConfig, err := g.gitService.BranchPull(pullData.ProjectId, pullData.BranchName)
+	if err != nil {
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	SuccessResponse(c, gitConfig)
 }

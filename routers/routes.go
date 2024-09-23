@@ -50,7 +50,7 @@ func RegisterRoutes(router *gin.Engine) {
 	}
 	gitStorage := storage.NewGitStore()
 	gitService := services.NewGitService(gitStorage)
-	gitHandler := api.NewGitHandler(gitService)
+	gitHandler := api.NewGitHandler(gitService, projectService)
 	gitRoutes := router.Group("/git")
 	gitRoutes.Use(middleware.AuthMiddleware())
 	{
@@ -58,6 +58,7 @@ func RegisterRoutes(router *gin.Engine) {
 		gitRoutes.POST("/create_git", gitHandler.CreateGitConfigHandler)
 		gitRoutes.GET("/remote_branches/:id", gitHandler.RemoteBranchesHandler)
 		gitRoutes.GET("/remote_commits", gitHandler.RemoteBranchCommitsHandler)
+		gitRoutes.POST("/breach_pull", gitHandler.BranchPullHandler)
 	}
 
 	taskRoutes := router.Group("/tasks")
