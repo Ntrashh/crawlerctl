@@ -20,10 +20,6 @@ func NewProjectHandler(projectService *services.ProjectService) *ProjectHandler 
 	}
 }
 
-func (p *ProjectHandler) ListProjectsHandler(c *gin.Context) {
-	SuccessResponse(c, "")
-}
-
 func (p *ProjectHandler) AddProjectHandler(c *gin.Context) {
 	// 获取表单参数
 	projectName := c.PostForm("project_name")
