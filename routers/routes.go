@@ -63,6 +63,16 @@ func RegisterRoutes(router *gin.Engine) {
 
 	}
 
+	programStorage := storage.NewProgramStore()
+	programService := services.NewProgramService(programStorage)
+	programHandler := api.NewProgramHandler(programService)
+	programRoutes := router.Group("/programs")
+	programRoutes.Use(middleware.AuthMiddleware())
+	{
+		programRoutes.GET("/programs", programHandler.GetPrograms)
+		programRoutes.POST("/add_program", programHandler.CreateProgram)
+	}
+
 	taskRoutes := router.Group("/tasks")
 	{
 		taskRoutes.GET("/task_status", api.GetTaskStatus)

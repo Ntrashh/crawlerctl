@@ -20,10 +20,9 @@ func InitDatabase() *gorm.DB {
 		fmt.Printf("无法连接到数据库: %v \n", err)
 	}
 	// 执行迁移
-	err = DB.AutoMigrate(&models.Project{}, &models.Git{})
+	err = DB.AutoMigrate(&models.Project{}, &models.Git{}, &models.Program{})
 	if err != nil {
 		log.Fatal("迁移失败:", err)
 	}
 	return DB
-
 }
