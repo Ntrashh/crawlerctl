@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"github.com/Ntrashh/crawlerctl/models"
 	"github.com/Ntrashh/crawlerctl/storage"
 )
@@ -16,12 +17,19 @@ func NewProgramService(projectStorage storage.ProgramStore) *ProgramService {
 }
 
 func (p *ProgramService) AddProgramService(programName, startCommand string, projectId uint) error {
+	program, err := p.programStore.GetByName(programName)
+	if err != nil {
+		return err
+	}
+	if program.Id != 0 {
+		return errors.New("program already exists")
+	}
 	programMode := models.Program{
 		Name:         programName,
 		StartCommand: startCommand,
 		ProjectID:    projectId,
 	}
-	err := p.programStore.Create(programMode)
+	err = p.programStore.Create(programMode)
 	if err != nil {
 		return err
 	}

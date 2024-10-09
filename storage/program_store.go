@@ -8,6 +8,7 @@ import (
 type ProgramStore interface {
 	Create(program models.Program) error
 	GetAll() ([]models.Program, error)
+	GetByName(name string) (models.Program, error)
 }
 
 type programStore struct {
@@ -29,4 +30,13 @@ func (s programStore) GetAll() ([]models.Program, error) {
 	}
 	return programs, nil
 
+}
+
+func (s programStore) GetByName(name string) (models.Program, error) {
+	var programMode models.Program
+	result := database.DB.Where("name = ?", name).FirstOrInit(&programMode)
+	if result != nil {
+		return programMode, result.Error
+	}
+	return programMode, nil
 }

@@ -28,7 +28,7 @@ func (p *ProgramHandler) CreateProgram(c *gin.Context) {
 	}
 	err := p.programService.AddProgramService(req.ProgramName, req.StartCommand, uint(req.ProjectId))
 	if err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	SuccessResponse(c, nil)
@@ -37,7 +37,7 @@ func (p *ProgramHandler) CreateProgram(c *gin.Context) {
 func (p *ProgramHandler) GetPrograms(c *gin.Context) {
 	programs, err := p.programService.GetAllPrograms()
 	if err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	SuccessResponse(c, programs)
